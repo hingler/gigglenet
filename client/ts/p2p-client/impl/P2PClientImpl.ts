@@ -19,25 +19,7 @@ export class P2PClientImpl implements P2PClient {
 
   constructor() {
     this.commandQueue = new Set();
-
-    let tempPeer = new Peer(null, {
-      debug: 2
-    });
-
-    tempPeer.on("open", (id: string) => {
-      this.peer = tempPeer;
-      this.configurePeer(tempPeer);
-    });
-
-    tempPeer.on("connection", (conn: DataConnection) => {
-      console.warn("client attempted to connect to local, disconnecting...");
-      setInterval(() => conn.close(), 500);
-    })
-
-    tempPeer.on("error", (error) => {
-      console.log("peer encountered error: ", error);
-    });
-
+    this.configurePeer();
   }
 
   connect(destinationId: string, callback?: ConnectionCallback) {
@@ -67,8 +49,6 @@ export class P2PClientImpl implements P2PClient {
   }
 
   close() {
-    // tba: close call while connecting?
-    //  - create bool flag
     if (this.conn != null) {
       this.conn.close();
     }
@@ -76,8 +56,27 @@ export class P2PClientImpl implements P2PClient {
     this.conn = null;
   }
 
-  // peer connected successfully - configure for new connection
-  private configurePeer(peer: Peer) {
+  private configurePeer() {
+    let tempPeer = new Peer(null, {
+      debug: 2
+    });
+
+    tempPeer.on("open", (id: string) => {
+      this.onPeerOpen(tempPeer);
+    });
+
+    tempPeer.on("connection", (conn: DataConnection) => {
+      console.warn("client attempted to connect to local, disconnecting...");
+      setInterval(() => conn.close(), 500);
+    })
+
+    tempPeer.on("error", (error) => {
+      console.log("peer encountered error: ", error);
+    });
+  }
+
+  private onPeerOpen(peer: Peer) {
+    this.peer = peer;
     console.debug("peer configured - able to connect now");
 
     if (this._destinationId != null) {
@@ -86,7 +85,7 @@ export class P2PClientImpl implements P2PClient {
     }
   }
 
-  // creates connection to specified ID
+  // handles connection creation
   private configureConnection(id: string) {
     console.log("configuring connection...");
     let tempConn = this.peer.connect(id, {
@@ -97,33 +96,37 @@ export class P2PClientImpl implements P2PClient {
     });
 
     tempConn.on("error", (error) => {
-      console.log("received error: ", error);
+      console.error("data connection dropped: ", error);
     });
 
     tempConn.on("open", () => {
-      // pass to object + handle
-      this.conn = tempConn;
-      if (this._connectCallback != null) {
-        this._connectCallback();
-      }
+      this.onConnectionOpen(tempConn);
+    });
+  }
 
-      console.log("conn is open, sending waiting commands");
-      for (let p of this.commandQueue) {
-        this.conn.send(p);
-      }
+  private onConnectionOpen(conn: DataConnection) {
+    // pass to object + handle
+    this.conn = conn;
+    if (this._connectCallback != null) {
+      this._connectCallback();
+    }
 
-      this.commandQueue.clear();
+    console.log("conn is open, sending waiting commands");
+    for (let p of this.commandQueue) {
+      this.conn.send(p);
+    }
 
-      tempConn.on("data", (data) => {
-        console.log("client: received message from server");
-        let packet = data as CommandPacket;
-        let listeners = this.commandBroadcaster.getListeners(packet.command);
-        if (listeners != null) {
-          for (let listener of listeners) {
-            listener(packet.message);
-          }
+    this.commandQueue.clear();
+
+    this.conn.on("data", (data) => {
+      console.log("client: received message from server");
+      let packet = data as CommandPacket;
+      let listeners = this.commandBroadcaster.getListeners(packet.command);
+      if (listeners != null) {
+        for (let listener of listeners) {
+          listener(packet.message);
         }
-      })
+      }
     })
   }
 }
