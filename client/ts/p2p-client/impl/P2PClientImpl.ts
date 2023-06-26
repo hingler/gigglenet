@@ -4,6 +4,7 @@ import { CommandBroadcaster } from '../../../../shared/CommandBroadcaster';
 import { CommandPacket, CommandPacketImpl } from '../../CommandPacket';
 
 import * as uuid from 'uuid';
+import { CommandConsts } from '../../../../shared/CommandConsts';
 
 // as is: i can probably put the crossword schtick on it and debug later
 
@@ -33,7 +34,17 @@ export class P2PClientImpl implements P2PClient {
       this.close();
       this.configureConnection(this._destinationId);
     }
+  }
 
+  connectViaShortId(shortId: string, endpoint: URL, callback?: ConnectionCallback) {
+    this.fetchId(shortId, endpoint).then(
+      (id) => {
+        console.log("resolved short ID to", id, ", attempting to connect...");
+        if (id != null && uuid.validate(id)) {
+          this.connect(id, callback);
+        }
+      }
+    )
   }
 
   send(command: string, message: any) {
@@ -56,6 +67,18 @@ export class P2PClientImpl implements P2PClient {
     }
 
     this.conn = null;
+  }
+
+  private async fetchId(id: string, endpoint: URL): Promise<string> {
+    let queryEndpoint = new URL(endpoint);
+    queryEndpoint.search = `${CommandConsts.ID_QUERY_KEY}=${id}`
+    try {
+      const res = await fetch(queryEndpoint);
+      return await res.text();
+    } catch (reason) {
+      console.error("encountered error: ", reason);
+      return "";
+    }
   }
 
   private configurePeer() {

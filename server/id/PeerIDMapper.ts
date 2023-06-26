@@ -20,7 +20,9 @@ export class PeerIDMapper {
    * @returns generated shorthand ID
    */
   registerId(peerId: string): string {
-    return ""
+    let id = this.generateNewId();
+    this.idMap.set(id, peerId);
+    return id;
   }
 
   /**
@@ -29,7 +31,11 @@ export class PeerIDMapper {
    * @returns corresponding peer ID
    */
   getId(shortId: string): string {
-    return ""
+    if (!this.idMap.has(shortId)) {
+      return "";
+    } else {
+      return this.idMap.get(shortId);
+    }
   }
 
   private generateNewId(): string {

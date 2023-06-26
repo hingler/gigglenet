@@ -6,23 +6,34 @@ import { CommandPacket } from "../../CommandPacket";
 
 import * as uuid from 'uuid';
 import { GigglenetMetadata } from "../../../../shared/GigglenetMetadata";
+import { AsyncPromise } from "../../../../shared/promise/AsyncPromise";
+import { registerPeerId } from "./registerPeerId";
 
 export class P2PServerImpl implements P2PServer {
   private peer: Peer;
   private clientMap: Map<string, ClientHandle> = new Map();
   private commandBroadcaster: CommandBroadcaster<ServerCallback> = new CommandBroadcaster();
+  private shortId: AsyncPromise<string> = new AsyncPromise();
 
-  get peerId() {
+  get peerId(): string {
     return this.peer.id;
   }
 
-  constructor() {
+  constructor(endpoint: URL) {
     this.peer = new Peer(null, {
       debug: 2
     });
 
     this.peer.on("open", (id: string) => {
       console.log("new id: ", id)
+      if (endpoint != null) {
+        registerPeerId(this, endpoint).then((id: string) => {
+          this.shortId.resolve(id);
+          console.log("short id: ", id);
+        })
+      } else {
+        this.shortId.reject("no shortid available");
+      }
     });
 
     this.peer.on("connection", (conn: DataConnection) => {
@@ -39,6 +50,14 @@ export class P2PServerImpl implements P2PServer {
     for (let handle of this.clientMap.values()) {
       handle.send(command, message);
     }
+  }
+
+  getShortenedId(): string | null {
+    return this.shortId.get();
+  }
+
+  getShortenedIdAsync(): Promise<string> {
+    return this.shortId.promise();
   }
 
   private configureConnection(conn: DataConnection) {

@@ -15,7 +15,7 @@ function connect(ev: MouseEvent) {
   let id = (document.getElementById("peer-id") as HTMLInputElement).value;
   console.log("connecting to peer ", id);
   peer = new P2PClientImpl();
-  peer.connect(id, () => {
+  peer.connectViaShortId(id, new URL("http://localhost:8080/get-peer"), () => {
     console.log("the bluetooth device is connected successfully");
     peer.send("test", {
       field: "hello"
