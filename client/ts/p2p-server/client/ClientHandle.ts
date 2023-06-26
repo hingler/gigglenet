@@ -1,28 +1,13 @@
-import { DataConnection } from "peerjs";
-import { CommandPacketImpl } from "../../CommandPacket";
-
-/**
- * Handle representing an individual client
- */
-export class ClientHandle {
-  private conn: DataConnection;
-  private _uuid: string
-
-  get uuid() {
-    return this._uuid
-  }
-  constructor(conn: DataConnection, uuid: string) {
-    this.conn = conn;
-    this._uuid = uuid;
-  }
+export interface ClientHandle {
+  /**
+   * @returns uuid associated with this client
+   */
+  get uuid(): string
 
   /**
-   * Sends a message to the relevant client
+   * Sends a message to this client
    * @param command - command to send
-   * @param message - message we want to send
+   * @param message - message data to send
    */
-  send(command: string, message: any) {
-    // tba: optimize this?
-    this.conn.send(new CommandPacketImpl(command, message));
-  }
+  send(command: string, message: any): void;
 }

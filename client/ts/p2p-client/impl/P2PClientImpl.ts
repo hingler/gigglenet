@@ -25,6 +25,9 @@ export class P2PClientImpl implements P2PClient {
     this.configurePeer();
   }
 
+  // (issue: how can we compute our URL ahead of time??)
+  // TODO (just go hostname-relative lol, definitely a item)
+
   connect(destinationId: string, callback?: ConnectionCallback) {
     this._destinationId = destinationId;
     this._connectCallback = callback;

@@ -1,6 +1,6 @@
 // base impl for peer server
 
-import { ClientHandle } from "./client/ClientHandle";
+import { ClientHandle } from "./client/ClientHandleImpl";
 
 /**
  * @param client - object representing client which sends message

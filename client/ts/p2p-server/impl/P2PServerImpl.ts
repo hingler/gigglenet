@@ -1,6 +1,6 @@
 import Peer, { DataConnection } from "peerjs";
 import { P2PServer, ServerCallback } from "../P2PServer";
-import { ClientHandle } from "../client/ClientHandle";
+import { ClientHandleImpl } from "../client/ClientHandleImpl";
 import { CommandBroadcaster } from "../../../../shared/CommandBroadcaster";
 import { CommandPacket } from "../../CommandPacket";
 
@@ -8,10 +8,11 @@ import * as uuid from 'uuid';
 import { GigglenetMetadata } from "../../../../shared/GigglenetMetadata";
 import { AsyncPromise } from "../../../../shared/promise/AsyncPromise";
 import { registerPeerId } from "./registerPeerId";
+import { ClientHandle } from "../client/ClientHandle";
 
 export class P2PServerImpl implements P2PServer {
   private peer: Peer;
-  private clientMap: Map<string, ClientHandle> = new Map();
+  private clientMap: Map<string, ClientHandleImpl> = new Map();
   private commandBroadcaster: CommandBroadcaster<ServerCallback> = new CommandBroadcaster();
   private shortId: AsyncPromise<string> = new AsyncPromise();
 
@@ -70,9 +71,16 @@ export class P2PServerImpl implements P2PServer {
         500
       );
     } else {
+      let clientHandle: ClientHandleImpl;
+      // not secure - there should be a solution to generate "server-side" but i'm not sure how to do that
       console.log("received connection! uuid - ", metadata.uuid);
-      let clientHandle = new ClientHandle(conn, metadata.uuid);
-      this.clientMap.set(metadata.uuid, clientHandle);
+      if (this.clientMap.has(metadata.uuid)) {
+        clientHandle = this.clientMap.get(metadata.uuid);
+        clientHandle.updateConnection(conn);
+      } else {
+        clientHandle = new ClientHandleImpl(conn, metadata.uuid);
+        this.clientMap.set(metadata.uuid, clientHandle);
+      }
 
       conn.on("open", () => {
         console.log("connected to peer :3");
