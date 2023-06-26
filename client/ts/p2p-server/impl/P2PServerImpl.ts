@@ -35,6 +35,12 @@ export class P2PServerImpl implements P2PServer {
     this.commandBroadcaster.addListener(command, callback);
   }
 
+  send(command: string, message: any): void {
+    for (let handle of this.clientMap.values()) {
+      handle.send(command, message);
+    }
+  }
+
   private configureConnection(conn: DataConnection) {
     let metadata = (conn.metadata as GigglenetMetadata);
     // validate uuid metadata

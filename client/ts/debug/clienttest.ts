@@ -1,6 +1,5 @@
 // super simple static html page
 // accept a peer ID and attempt to connect to it
-
 import { P2PClient } from "../p2p-client/P2PClient";
 import { P2PClientImpl } from "../p2p-client/impl/P2PClientImpl";
 

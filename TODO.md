@@ -9,42 +9,23 @@ prob want to use socket io because i think they take care of a lot of it
   - possibly: custom factories driven by a "type string"
 
 
-trying peer js to help with the intricacies for now :3
-
-## server
-- setup looks simple
-- wow peer even handles the signaling server (i guess it might just be cheap to keep up??)
-- idea right now:
-  - server connects, and receives ID
-  - we can probably tell the "game service" which ID we got (or use it 1:1, or map it :o)
-  - do we want to handle game logic? i think that separate
-- our idea is just that we want some method for wrapping "arbitrary data"
-  - how "low level" should it be? the library takes care of a lot
-  - q: "what would I personally need, to do everything I want to do?"
-    - definitely not video streaming
-    - json objects would help a lot
-      - how about: "compression" -> "decompression" schemata?
-      - nvm - peerjs handles it :3
-      - we can start to get more "custom" with the event data :o
+## server config
+- would like to do it jackbox-ish:
+  - server maps peerjs ids -> shorthand IDs (4 chars ideally)
+  - user fetches full peerJS id from "game server" and maps to a peer ID
+  - prob use some sort of "game filter" to ensure we're not accidentally connecting to the wrong thing, otherwise the game will break
+  - (we cna use a namespace to accomplish somewhat with v5 - not a good way to hide if we're client gen'd but whatever)
+    - tba: we could negotiate with server prior?? not gonna worry about it right now
 
 
-## engineering
-- how much work should the wrapper be doing
-  - specifically designed for the "jackbox" type game setups
-  - at some point i had the idea that we would focus on "game snapshots" and that would help resolve things (possibly makes sense? not suited for every idea though)
-  - there were a couple ideas on the back burner which would benefit from this (cw, show)
-  - a couple which wouldn't (meme, jb)
-  - could try to "please everyone"
-  - could also write a separate "client/server" thing which we could feed updates to
-  - i think we just keep it super simple for now, we probably don't even need lag comp >:D
-    - (might be good to write a basic "lag comp" setup though)
-- type consumption
-  - we definitely need some type of "factory" to convert json/binary data to type info
-  - can't depend on interfaces to infer type info - factory w endpoints???
-  - idea1: append some sort of "type hint" which a factory will be responsible for parsing
-  - idea2: use "type hints" in the place of proper typing
-    - use some factory to pick up and propagate
-
-
-## some misc notes
-- local connection and remote connection are both peer connection objects
+## misc todos
+- handle reconnect events gracefully
+  - connect back to game if possible
+- handle snapshots gracefully
+  - ie some sort of server wrapper for a specific command
+  - in lagcomp i think
+  - provide a "receive input" command and a "send snapshot" command (server)
+  - provide a "receive snapshot" and a "send input" command (client)
+  - need to write two-sided unfortunately i think
+    - input handler (modify moving forwards)
+    - snapshot lerper (can be generic if we implement correctly)

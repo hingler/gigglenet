@@ -5,6 +5,8 @@ import { CommandPacket, CommandPacketImpl } from '../../CommandPacket';
 
 import * as uuid from 'uuid';
 
+// as is: i can probably put the crossword schtick on it and debug later
+
 export class P2PClientImpl implements P2PClient {
   private peer: Peer;
   private conn: DataConnection;
